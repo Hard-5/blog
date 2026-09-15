@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hard 5</title>
+<meta name="description" content="记录学习与思考的个人博客">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text y='72' x='50' text-anchor='middle' font-size='58' font-family='sans-serif' fill='white'>H</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+<script>
+/* 在 CSS 生效前就定好主题，避免深色模式下闪白 */
+(function () {
+  try {
+    var t = localStorage.getItem('blog-theme');
+    if (t !== 'dark' && t !== 'light') {
+      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="container inner">
+    <a class="brand" href="#/">
+      <span class="logo" aria-hidden="true">H</span>
+      <span class="name">Hard 5</span>
+    </a>
+    <nav class="site-nav" aria-label="主导航"></nav>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题" title="切换主题">☾</button>
+  </div>
+</header>
+
+<main id="app" class="container"></main>
+
+<footer class="site-footer">
+  <div class="container inner">
+    <div>
+      <strong id="footer-title">Hard 5</strong>
+      <span id="footer-note"></span>
+    </div>
+    <div id="footer-links" style="display:flex;gap:14px"></div>
+  </div>
+</footer>
+
+<button class="to-top" id="to-top" type="button" aria-label="回到顶部" title="回到顶部">↑</button>
+
+<!-- 文章数据由 tools/build.mjs 生成；直接双击本文件即可阅读 -->
+<script src="assets/js/posts-data.js"></script>
+<!-- 渲染器（构建期已用同一份代码预渲染，这里保留以便扩展） -->
+<script src="assets/js/markdown.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

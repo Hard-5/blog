@@ -1,0 +1,19 @@
+{
+  "title": "Hard 5",
+  "subtitle": "记录一个大一新生的编程学习过程",
+  "description": "计算机专业学习笔记：C / Python / 数据结构与算法 / 工程工具链。写给自己，也写给后来的人。",
+  "author": "Hard 5",
+  "lang": "zh-CN",
+  "url": "https://hard-5.github.io/blog/",
+  "repo": "Hard-5/blog",
+  "avatar": "",
+  "footer": "用 Markdown 写作 · 零依赖静态博客",
+  "nav": [
+    { "label": "首页", "href": "#/" },
+    { "label": "标签", "href": "#/tags" },
+    { "label": "关于", "href": "#/about" }
+  ],
+  "links": [
+    { "label": "GitHub", "href": "https://github.com/Hard-5" }
+  ]
+}

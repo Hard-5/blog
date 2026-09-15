@@ -8,22 +8,22 @@
     <atom:link href="https://hard-5.github.io/blog/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title>写在这个博客开始的地方</title>
-      <link>https://hard-5.github.io/blog/#/post/hello-blog</link>
-      <guid isPermaLink="false">hello-blog</guid>
+      <link>https://hard-5.github.io/blog/p/hello-blog.html</link>
+      <guid isPermaLink="true">https://hard-5.github.io/blog/p/hello-blog.html</guid>
       <pubDate>Tue, 15 Sep 2026 08:00:00 GMT</pubDate>
       <description>为什么大一要开始写技术博客，以及这个博客怎么用、怎么写、怎么发出去。</description>
     </item>
     <item>
       <title>Markdown 语法速查（本博客支持的全部写法）</title>
-      <link>https://hard-5.github.io/blog/#/post/markdown-guide</link>
-      <guid isPermaLink="false">markdown-guide</guid>
+      <link>https://hard-5.github.io/blog/p/markdown-guide.html</link>
+      <guid isPermaLink="true">https://hard-5.github.io/blog/p/markdown-guide.html</guid>
       <pubDate>Sun, 13 Sep 2026 08:00:00 GMT</pubDate>
       <description>一页看完标题、强调、列表、任务清单、表格、引用、代码块、链接图片的写法，顺便验证渲染效果。</description>
     </item>
     <item>
       <title>大一编程技术学习计划</title>
-      <link>https://hard-5.github.io/blog/#/post/freshman-cs-plan</link>
-      <guid isPermaLink="false">freshman-cs-plan</guid>
+      <link>https://hard-5.github.io/blog/p/freshman-cs-plan.html</link>
+      <guid isPermaLink="true">https://hard-5.github.io/blog/p/freshman-cs-plan.html</guid>
       <pubDate>Thu, 10 Sep 2026 08:00:00 GMT</pubDate>
       <description>把大一拆成 P0~P4 五个阶段：工具链与语言起步、语言成型、数据结构、项目与工程、方向探索，每阶段都有必须拿得出来的交付物。</description>
     </item>

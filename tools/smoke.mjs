@@ -39,6 +39,8 @@ function makeEl(id = '') {
     addEventListener() {},
     appendChild() {},
     removeChild() {},
+    focus() {},
+    select() {},
     querySelector() { return null; },
     querySelectorAll() { return []; },
     scrollIntoView() {},
@@ -132,8 +134,22 @@ function goto(hash) {
   }
 }
 
-console.log('加载 posts-data.js 与 app.js（首屏即渲染首页）');
+/** 检测 <a> 里套 <a>：HTML 不允许，浏览器会把外层链接拆开，卡片结构会乱 */
+function hasNestedAnchors(html) {
+  const re = /<a\b[^>]*>|<\/a>/g;
+  let depth = 0;
+  let m;
+  while ((m = re.exec(html))) {
+    if (m[0] === '</a>') depth = Math.max(0, depth - 1);
+    else { depth++; if (depth > 1) return true; }
+  }
+  return false;
+}
+
+console.log('加载 posts-data.js、ui.js 与 app.js（首屏即渲染首页）');
 run('assets/js/posts-data.js');
+run('assets/js/ui.js');
+assert('BlogUI 已导出', typeof sandbox.BlogUI === 'object' && typeof sandbox.BlogUI.initCommon === 'function');
 ids.get('app').innerHTML = '';
 run('assets/js/app.js');
 
@@ -144,14 +160,19 @@ const cards = (s) => count(s, /class="post-card/g);
 console.log('\n路由渲染：');
 assert('首页渲染出 3 张文章卡片', cards(out()) === 3);
 assert('首页有 hero 与工具栏', /class="hero"/.test(out()) && /id="search"/.test(out()));
-assert('首页侧栏有标签统计', /side-card/.test(out()));
+assert('标签下拉框无需先点标签就存在', /id="tag-filter"/.test(out()));
+assert('首页侧栏有标签统计与 RSS 入口', /side-card/.test(out()) && /feed\.xml/.test(out()));
+assert('首页没有非法嵌套的 <a>（卡片里不能再套链接）', !hasNestedAnchors(out()));
 assert('首屏标题已写入 <title>', !!documentMock.title);
 
 goto('#/post/markdown-guide');
 assert('文章页有标题与元信息', /class="post-header"/.test(out()) && out().includes('Markdown 语法速查'));
-assert('文章页渲染了目录', /class="toc"/.test(out()));
+assert('文章页渲染了目录', /class="toc"/.test(out()) && /toc-wrap/.test(out()));
 assert('文章页渲染了代码块与复制按钮', /class="md-copy"/.test(out()) && count(out(), /class="md-code"/g) > 3);
+assert('文章页有分享按钮（固定链接）', /data-copy-url="https:\/\/hard-5\.github\.io\/blog\/p\/markdown-guide\.html"/.test(out()));
 assert('文章页有上下篇导航', /class="post-nav"/.test(out()));
+assert('文章页没有非法嵌套的 <a>', !hasNestedAnchors(out()));
+assert('文章页标签仍是可点链接', /<a class="tag" href="#\/\?tag=/.test(out()));
 assert('文章页标题写入了 <title>', documentMock.title.includes('Markdown'));
 
 goto('#/');
@@ -161,11 +182,15 @@ goto('#/?tag=工具');
 assert('标签过滤只留下 1 篇', cards(out()) === 1 && out().includes('markdown-guide'));
 assert('标签页出现标签下拉框', /id="tag-filter"/.test(out()));
 
+goto('#/archive');
+assert('归档页渲染并按年份分组', /archive-list/.test(out()) && out().includes('2026 年'));
+assert('归档页列出全部文章', count(out(), /archive-list[\s\S]*?<\/ul>/) === 1 && count(out(), /<li>/g) === 3);
+
 goto('#/tags');
 assert('标签总览页渲染', /tag-cloud/.test(out()) && count(out(), /class="tag"/g) > 3);
 
 goto('#/about');
-assert('关于页渲染（pages/about.md）', /class="prose"/.test(out()) && out().includes('关于我'));
+assert('关于页渲染（pages/about.md）', /class="prose"/.test(out()) && out().includes('Hard 5'));
 
 goto('#/post/this-does-not-exist');
 assert('不存在的文章走 404 分支', /404/.test(out()));
@@ -173,8 +198,27 @@ assert('不存在的文章走 404 分支', /404/.test(out()));
 goto('#/whatever');
 assert('未知路由走 404 分支', /404/.test(out()));
 
+// 无障碍跳转链接会产生 #app 这种非路由 hash，不能把页面变成空白
+locationMock.hash = '#app';
+(listeners.hashchange || []).forEach((fn) => fn());
+assert('#app 锚点不被当成路由（页面照常渲染）', cards(out()) === 3);
+
 goto('#/');
 assert('最终回到首页', cards(out()) === 3);
+
+// 键盘快捷键：按 / 聚焦搜索框，且不能在输入框内抢按键
+console.log('\n键盘交互：');
+const kd = listeners.keydown || [];
+assert('注册了 keydown 监听', kd.length >= 1);
+let threw = false;
+try {
+  kd.forEach((fn) => {
+    fn({ key: '/', target: { tagName: 'BODY' }, preventDefault() {} });
+    fn({ key: '/', target: { tagName: 'INPUT' }, preventDefault() {} });
+    fn({ key: 'Escape', target: { tagName: 'BODY' } });
+  });
+} catch (e) { threw = true; console.log(`      异常：${e.message}`); }
+assert('键盘事件处理不抛异常', !threw);
 
 console.log(`\n结果：${failures ? failures + ' 项失败' : '全部通过'}`);
 if (failures) process.exit(1);

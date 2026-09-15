@@ -16,6 +16,10 @@ window.SITE = {
       "href": "#/"
     },
     {
+      "label": "归档",
+      "href": "#/archive"
+    },
+    {
       "label": "标签",
       "href": "#/tags"
     },
@@ -251,4 +255,4 @@ window.BLOG_PAGES = {
     ]
   }
 };
-window.BLOG_BUILT_AT = "2026-09-15T12:39:36.885Z";
+window.BLOG_BUILT_AT = "2026-09-15T12:48:04.810Z";

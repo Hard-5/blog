@@ -7,6 +7,7 @@
 <meta name="description" content="记录学习与思考的个人博客">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text y='72' x='50' text-anchor='middle' font-size='58' font-family='sans-serif' fill='white'>H</text></svg>">
+<link rel="alternate" type="application/rss+xml" title="Hard 5" href="feed.xml">
 <link rel="stylesheet" href="assets/css/style.css">
 <script>
 /* 在 CSS 生效前就定好主题，避免深色模式下闪白 */
@@ -25,6 +26,8 @@
 </head>
 <body>
 
+<a class="skip-link" href="#app">跳到正文</a>
+
 <div class="progress" id="progress" aria-hidden="true"></div>
 
 <header class="site-header">
@@ -33,12 +36,59 @@
       <span class="logo" aria-hidden="true">H</span>
       <span class="name">Hard 5</span>
     </a>
-    <nav class="site-nav" aria-label="主导航"></nav>
+    <nav class="site-nav" aria-label="主导航">
+<!-- BUILD:NAV:START -->
+<a href="#/">首页</a><a href="#/archive">归档</a><a href="#/tags">标签</a><a href="#/about">关于</a>
+<!-- BUILD:NAV:END -->
+    </nav>
     <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题" title="切换主题">☾</button>
   </div>
 </header>
 
-<main id="app" class="container"></main>
+<main id="app" class="container" tabindex="-1">
+<!-- BUILD:HOME:START -->
+<section class="hero">
+      <h1>Hard 5</h1>
+      <p>计算机专业学习笔记：C / Python / 数据结构与算法 / 工程工具链。写给自己，也写给后来的人。</p>
+      <div class="meta-row">
+        <span class="chip">共 3 篇文章</span>
+        <span class="chip">最近更新 2026 年 9 月 15 日</span>
+        <span class="chip">作者 Hard 5</span>
+      </div>
+    </section>
+    <div class="layout with-side">
+      <main>
+        <h2 class="section-title">最新文章 <span class="count">3 篇</span></h2>
+        <div class="post-list">
+    <a class="post-card" href="p/hello-blog.html">
+      <h3>写在这个博客开始的地方</h3>
+      <p class="summary">为什么大一要开始写技术博客，以及这个博客怎么用、怎么写、怎么发出去。</p>
+      <div class="meta"><span>2026 年 9 月 15 日</span><i class="dot"></i><span>2 分钟阅读</span><i class="dot"></i><span class="tags"><span class="tag">随笔</span><span class="tag">元</span></span></div>
+    </a>
+    <a class="post-card" href="p/markdown-guide.html">
+      <h3>Markdown 语法速查（本博客支持的全部写法）</h3>
+      <p class="summary">一页看完标题、强调、列表、任务清单、表格、引用、代码块、链接图片的写法，顺便验证渲染效果。</p>
+      <div class="meta"><span>2026 年 9 月 13 日</span><i class="dot"></i><span>2 分钟阅读</span><i class="dot"></i><span class="tags"><span class="tag">工具</span><span class="tag">写作</span></span></div>
+    </a>
+    <a class="post-card" href="p/freshman-cs-plan.html">
+      <h3>大一编程技术学习计划</h3>
+      <p class="summary">把大一拆成 P0~P4 五个阶段：工具链与语言起步、语言成型、数据结构、项目与工程、方向探索，每阶段都有必须拿得出来的交付物。</p>
+      <div class="meta"><span>2026 年 9 月 10 日</span><i class="dot"></i><span>7 分钟阅读</span><i class="dot"></i><span class="tags"><span class="tag">学习计划</span><span class="tag">方法论</span></span></div>
+    </a>
+        </div>
+      </main>
+      <aside>
+        <div class="side-card"><h4>关于</h4><p>记录一个大一新生的编程学习过程</p></div>
+        <div class="side-card"><h4>标签</h4><ul><li><a href="#/?tag=%E9%9A%8F%E7%AC%94">随笔<span>1</span></a></li><li><a href="#/?tag=%E5%85%83">元<span>1</span></a></li><li><a href="#/?tag=%E5%B7%A5%E5%85%B7">工具<span>1</span></a></li><li><a href="#/?tag=%E5%86%99%E4%BD%9C">写作<span>1</span></a></li><li><a href="#/?tag=%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92">学习计划<span>1</span></a></li><li><a href="#/?tag=%E6%96%B9%E6%B3%95%E8%AE%BA">方法论<span>1</span></a></li></ul></div>
+        <div class="side-card"><h4>统计</h4><ul>
+          <li><a>文章<span>3</span></a></li>
+          <li><a>标签<span>6</span></a></li>
+          <li><a href="feed.xml">RSS 订阅<span>↗</span></a></li>
+        </ul></div>
+      </aside>
+    </div>
+<!-- BUILD:HOME:END -->
+</main>
 
 <footer class="site-footer">
   <div class="container inner">
@@ -54,6 +104,8 @@
 
 <!-- 文章数据由 tools/build.mjs 生成；直接双击本文件即可阅读 -->
 <script src="assets/js/posts-data.js"></script>
+<!-- 界面行为（主题 / 复制 / 目录 / 进度条），与静态文章页共用一份 -->
+<script src="assets/js/ui.js"></script>
 <!-- 渲染器（构建期已用同一份代码预渲染，这里保留以便扩展） -->
 <script src="assets/js/markdown.js"></script>
 <script src="assets/js/app.js"></script>

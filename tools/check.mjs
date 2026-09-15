@@ -99,6 +99,77 @@ for (const [name, page] of Object.entries(pages)) {
   if (/\u0000/.test(page.html || '')) fail(name, '存在未还原的占位符');
 }
 
+/* ------------------------------ 静态页面与 SEO 产物 ------------------------------ */
+
+const STATIC_DIR = path.join(ROOT, 'p');
+const published = posts.filter((p) => !p.draft);
+
+console.log(`静态页面检查：${published.length} 篇\n`);
+
+if (!fs.existsSync(STATIC_DIR)) {
+  fail('p/', '静态文章页目录不存在——搜索引擎和微信分享卡片将抓不到内容');
+} else {
+  for (const p of published) {
+    const file = path.join(STATIC_DIR, `${p.slug}.html`);
+    if (!fs.existsSync(file)) { fail(p.slug, '缺少静态页面 p/' + p.slug + '.html'); continue; }
+
+    const html = fs.readFileSync(file, 'utf8');
+    const must = [
+      ['og:title', /<meta property="og:title" content="[^"]+">/],
+      ['og:description', /<meta property="og:description" content="[^"]+">/],
+      ['og:url', /<meta property="og:url" content="https?:\/\/[^"]+">/],
+      ['canonical', /<link rel="canonical" href="https?:\/\/[^"]+">/],
+      ['description', /<meta name="description" content="[^"]+">/],
+      ['结构化数据', /application\/ld\+json/],
+    ];
+    for (const [name, re] of must) {
+      if (!re.test(html)) fail(p.slug, `静态页面缺少 ${name}`);
+    }
+    if (html.includes('<!-- BUILD:')) fail(p.slug, '静态页面里有未替换的构建标记');
+    if (/\u0000/.test(html)) fail(p.slug, '静态页面有占位符残留');
+    if (!html.includes(p.title)) fail(p.slug, '静态页面里找不到文章标题');
+    if (!/assets\/js\/ui\.js/.test(html)) fail(p.slug, '静态页面没有引用 ui.js（主题和复制按钮会失效）');
+    if (p.toc.length && !/class="toc-wrap"/.test(html)) fail(p.slug, '静态页面缺少目录');
+    // 相对路径必须是 ../，否则在 GitHub Pages 子目录下会 404
+    if (/(?:src|href)="\/assets\//.test(html)) fail(p.slug, '静态页面用了绝对路径 /assets/，子目录部署会失效');
+    const badAsset = /(?:src|href)="assets\//.exec(html);
+    if (badAsset) fail(p.slug, `静态页面引用了同级 assets/（应为 ../assets/）：${badAsset[0]}`);
+  }
+}
+
+// index.html 的静态注入（标记本身要保留，供下次构建使用，所以检查的是「注入区非空」）
+const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+for (const name of ['NAV', 'HOME']) {
+  const m = new RegExp('<!-- BUILD:' + name + ':START -->([\\s\\S]*?)<!-- BUILD:' + name + ':END -->').exec(indexHtml);
+  if (!m) fail('index.html', `找不到 BUILD:${name} 标记（构建无法注入静态内容）`);
+  else if (!m[1].trim()) fail('index.html', `BUILD:${name} 注入区是空的`);
+}
+for (const p of published) {
+  if (!indexHtml.includes(`p/${p.slug}.html`)) fail('index.html', `静态首页里没有指向 ${p.slug} 的链接`);
+}
+if (!/class="site-nav"[\s\S]*?<a href="#\/archive"/.test(indexHtml)) warn('index.html', '静态导航里没有归档链接');
+
+// sitemap / robots
+const site = JSON.parse(fs.readFileSync(path.join(ROOT, 'site.json'), 'utf8'));
+if (site.url) {
+  const sitemapPath = path.join(ROOT, 'sitemap.xml');
+  if (!fs.existsSync(sitemapPath)) fail('sitemap.xml', '文件不存在');
+  else {
+    const sm = fs.readFileSync(sitemapPath, 'utf8');
+    for (const p of published) {
+      if (!sm.includes(`p/${p.slug}.html`)) fail('sitemap.xml', `没有收录 ${p.slug}`);
+    }
+    if (!/^<\?xml/.test(sm)) fail('sitemap.xml', '缺少 XML 声明');
+  }
+  if (!fs.existsSync(path.join(ROOT, 'robots.txt'))) fail('robots.txt', '文件不存在');
+  // RSS 应该指向静态页而不是 hash 路由
+  const feedPath = path.join(ROOT, 'feed.xml');
+  if (fs.existsSync(feedPath)) {
+    const feed = fs.readFileSync(feedPath, 'utf8');
+    if (feed.includes('#/post/')) warn('feed.xml', 'RSS 里还在用 #/post/ 链接，建议指向静态页');
+  }
+}
+
 /* ------------------------------ 隐私词检查 ------------------------------ */
 
 // 本地文件 .privacy-terms.txt 里每行写一个「绝不能出现在线上内容里」的词（比如真实姓名）。
@@ -114,10 +185,12 @@ if (fs.existsSync(privacyFile)) {
     const targets = [
       'assets/js/posts-data.js',
       'feed.xml',
+      'sitemap.xml',
       'index.html',
       'site.json',
       ...fs.readdirSync(path.join(ROOT, 'posts')).filter((f) => f.endsWith('.md')).map((f) => `posts/${f}`),
       ...fs.readdirSync(path.join(ROOT, 'pages')).filter((f) => f.endsWith('.md')).map((f) => `pages/${f}`),
+      ...(fs.existsSync(STATIC_DIR) ? fs.readdirSync(STATIC_DIR).filter((f) => f.endsWith('.html')).map((f) => `p/${f}`) : []),
     ];
 
     let leaked = 0;

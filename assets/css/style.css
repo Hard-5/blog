@@ -238,8 +238,18 @@ img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
 .post-body-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 34px; padding: 30px 0 60px; }
 .post-body-wrap.with-toc { grid-template-columns: minmax(0, 1fr) 232px; }
 
-.toc { position: sticky; top: 86px; align-self: start; font-size: 13.5px; max-height: calc(100vh - 120px); overflow: auto; }
-.toc h4 { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+/* 目录：外层 <details> 负责吸顶和折叠，内层 <nav> 只管列表 */
+.toc-wrap { position: sticky; top: 86px; align-self: start; font-size: 13.5px; max-height: calc(100vh - 120px); overflow: auto; }
+.toc-wrap > summary {
+  cursor: pointer; list-style: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 12.5px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .6px; margin-bottom: 10px; user-select: none;
+}
+.toc-wrap > summary::-webkit-details-marker { display: none; }
+.toc-wrap > summary::after { content: '▾'; font-size: 11px; transition: transform .2s ease; }
+.toc-wrap[open] > summary::after { transform: rotate(180deg); }
+.toc-wrap > summary:hover { color: var(--text); }
 .toc ul { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
 .toc li a {
   display: block; padding: 4px 0 4px 12px; margin-left: -2px;
@@ -369,12 +379,67 @@ img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
 .fade-in { animation: fadeIn .3s ease both; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* 跳转到正文：只在键盘 Tab 聚焦时出现 */
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 100;
+  background: var(--accent); color: #fff; padding: 9px 16px;
+  border-radius: 0 0 10px 0; font-size: 14px;
+}
+.skip-link:focus { left: 0; text-decoration: none; color: #fff; }
+
+/* 键盘焦点必须看得见（原来完全没有焦点样式） */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 5px;
+}
+#app:focus, #app:focus-visible { outline: none; }
+
+/* 分享按钮（文章页） */
+.share-btn {
+  font-family: inherit; font-size: 12.5px; color: var(--text-2);
+  background: var(--surface-2); border: 1px solid var(--border);
+  padding: 2px 11px; border-radius: 999px; cursor: pointer;
+  transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+.share-btn:hover { color: var(--accent-text); border-color: var(--accent); background: var(--accent-soft); }
+.share-btn.done { color: #16a34a; border-color: #16a34a; background: transparent; }
+
+/* 搜索结果里的命中高亮 */
+mark { background: rgba(250, 204, 21, .38); color: inherit; border-radius: 3px; padding: 0 2px; }
+.post-card mark { background: rgba(250, 204, 21, .45); }
+.post-card .summary.hit {
+  color: var(--text-2); font-size: 13.8px;
+  border-left: 2px solid var(--border-2); padding-left: 10px; margin-top: -4px;
+}
+
+/* 归档页 */
+.archive-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.archive-list li {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 10px 2px; border-bottom: 1px dashed var(--border);
+}
+.archive-list li:last-child { border-bottom: none; }
+.archive-list .date { flex: none; width: 46px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.archive-list li > a { font-size: 15.5px; }
+.archive-list .tags { margin-left: auto; }
+
+/* 独立页面的统一内边距与标题 */
+.page-pad { padding: 40px 0 70px; }
+.page-title { font-size: 29px; margin: 0 0 24px; letter-spacing: -.3px; line-height: 1.35; }
+
 /* ---------------- 响应式 ---------------- */
 
 @media (max-width: 980px) {
   .layout.with-side { grid-template-columns: minmax(0, 1fr); }
   .post-body-wrap.with-toc { grid-template-columns: minmax(0, 1fr); }
-  .toc { position: static; max-height: none; margin-bottom: 26px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  /* 手机上目录收成一条可点开的折叠条，放在正文前面（原来在正文后面，等于没用） */
+  .toc-wrap {
+    position: static; max-height: none; margin: 0 0 24px;
+    padding: 11px 15px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  .toc-wrap > summary { margin-bottom: 0; }
+  .toc-wrap[open] > summary { margin-bottom: 12px; }
   .toc ul { columns: 2; column-gap: 20px; }
 }
 

@@ -197,15 +197,250 @@ const js = [
 fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
 fs.writeFileSync(OUT_FILE, js, 'utf8');
 
+/* ================================================================
+ * 静态页面生成
+ *
+ * 为什么需要：博客主页是 JS 渲染的，而搜索引擎（尤其百度）和微信/QQ 的分享
+ * 卡片抓取器都不执行 JavaScript。所以每篇文章额外生成一份纯静态 HTML：
+ *   - p/<slug>.html  完整内容 + Open Graph 元信息，可直接分享、能被抓取
+ *   - sitemap.xml / robots.txt  告诉搜索引擎有哪些页面
+ *   - 顺便把首页的导航和文章列表静态注入 index.html，关掉 JS 也能读
+ * ================================================================ */
+
+const esc = MiniMarkdown.escapeHtml;
+const BASE = String(site.url || '').replace(/\/+$/, '');
+const LOGO = (site.title || 'B').trim().charAt(0);
+const STATIC_DIR = path.join(ROOT, 'p');
+const published = posts.filter((p) => !p.draft);
+
+const THEME_BOOT = '<script>(function(){try{var t=localStorage.getItem("blog-theme");'
+  + 'if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}'
+  + 'document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>';
+
+const FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%232563eb'/><text y='72' x='50' text-anchor='middle' font-size='58' font-family='sans-serif' fill='white'>" + LOGO + "</text></svg>";
+
+function navLinks(prefix) {
+  return (site.nav || []).map((n) => {
+    const href = String(n.href).charAt(0) === '#' ? prefix + n.href : n.href;
+    return `<a href="${esc(href)}">${esc(n.label)}</a>`;
+  }).join('');
+}
+
+function headerHtml(prefix) {
+  return `<header class="site-header">
+    <div class="container inner">
+      <a class="brand" href="${prefix}"><span class="logo" aria-hidden="true">${esc(LOGO)}</span><span class="name">${esc(site.title)}</span></a>
+      <nav class="site-nav" aria-label="主导航">${navLinks(prefix)}</nav>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题" title="切换主题">☾</button>
+    </div>
+  </header>`;
+}
+
+function footerHtml(prefix) {
+  const links = (site.links || []).concat([{ label: 'RSS', href: `${prefix}feed.xml` }])
+    .map((l) => `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join('');
+  return `<footer class="site-footer">
+    <div class="container inner">
+      <div><strong>${esc(site.title)}</strong> ${esc(site.footer || '')}</div>
+      <div style="display:flex;gap:14px">${links}</div>
+    </div>
+  </footer>`;
+}
+
+function tocHtml(post) {
+  if (!post.toc || !post.toc.length) return '';
+  return '<details class="toc-wrap" open><summary>目录</summary><nav class="toc"><ul>'
+    + post.toc.map((t) => `<li class="lv${t.level}"><a href="#${esc(t.id)}" data-toc="${esc(t.id)}">${esc(t.text)}</a></li>`).join('')
+    + '</ul></nav></details>';
+}
+
+function postNavHtml(older, newer, hrefOf) {
+  return '<nav class="post-nav">'
+    + (older
+      ? `<a class="prev" href="${esc(hrefOf(older))}"><span class="dir">← 上一篇</span><span class="t">${esc(older.title)}</span></a>`
+      : '<span class="placeholder"></span>')
+    + (newer
+      ? `<a class="next" href="${esc(hrefOf(newer))}"><span class="dir">下一篇 →</span><span class="t">${esc(newer.title)}</span></a>`
+      : '<span class="placeholder"></span>')
+    + '</nav>';
+}
+
+function renderPostPage(post, older, newer) {
+  const url = BASE ? `${BASE}/p/${post.slug}.html` : `p/${post.slug}.html`;
+  const title = `${post.title} · ${site.title}`;
+  const desc = post.summary;
+
+  const head = [
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    `<title>${esc(title)}</title>`,
+    `<meta name="description" content="${esc(desc)}">`,
+    site.author ? `<meta name="author" content="${esc(site.author)}">` : '',
+    `<link rel="canonical" href="${esc(url)}">`,
+    `<meta name="color-scheme" content="light dark">`,
+    // Open Graph：微信 / QQ / 微博 抓分享卡片用的就是这些
+    '<meta property="og:type" content="article">',
+    `<meta property="og:site_name" content="${esc(site.title)}">`,
+    `<meta property="og:title" content="${esc(post.title)}">`,
+    `<meta property="og:description" content="${esc(desc)}">`,
+    `<meta property="og:url" content="${esc(url)}">`,
+    '<meta property="og:locale" content="zh_CN">',
+    `<meta property="article:published_time" content="${esc(post.date)}">`,
+    ...post.tags.map((t) => `<meta property="article:tag" content="${esc(t)}">`),
+    '<meta name="twitter:card" content="summary">',
+    `<meta name="twitter:title" content="${esc(post.title)}">`,
+    `<meta name="twitter:description" content="${esc(desc)}">`,
+    `<link rel="icon" href="${FAVICON}">`,
+    '<link rel="alternate" type="application/rss+xml" title="' + esc(site.title) + '" href="../feed.xml">',
+    '<link rel="stylesheet" href="../assets/css/style.css">',
+    THEME_BOOT,
+    `<script type="application/ld+json">${JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      description: desc,
+      datePublished: post.date,
+      inLanguage: site.lang || 'zh-CN',
+      keywords: post.tags.join(', '),
+      author: { '@type': 'Person', name: site.author || site.title },
+      mainEntityOfPage: url,
+    })}</script>`,
+  ].filter(Boolean).join('\n  ');
+
+  return `<!DOCTYPE html>
+<html lang="${esc(site.lang || 'zh-CN')}">
+<head>
+  ${head}
+</head>
+<body>
+<a class="skip-link" href="#post-content">跳到正文</a>
+<div class="progress" id="progress" aria-hidden="true"></div>
+${headerHtml('../')}
+<main class="container" tabindex="-1">
+  <article class="fade-in">
+    <header class="post-header">
+      <a class="back-link" href="../">← 返回文章列表</a>
+      <h1>${esc(post.title)}</h1>
+      <div class="meta">
+        <span>${esc(post.dateText)}</span>
+        <i class="dot"></i><span>${post.readingTime} 分钟阅读</span>
+        <i class="dot"></i><span>${post.words} 字</span>
+        ${post.tags.length ? '<i class="dot"></i><span class="tags">' + post.tags.map((t) => `<a class="tag" href="../#/?tag=${encodeURIComponent(t)}">${esc(t)}</a>`).join('') + '</span>' : ''}
+        <button type="button" class="share-btn" data-copy-url="${esc(url)}" data-label="分享" title="复制这篇文章的固定链接">分享</button>
+      </div>
+    </header>
+    <div class="post-body-wrap${post.toc.length ? ' with-toc' : ''}">
+      <div class="prose" id="post-content">${post.html}</div>
+      ${tocHtml(post)}
+    </div>
+    ${postNavHtml(older, newer, (p) => `${p.slug}.html`)}
+  </article>
+</main>
+${footerHtml('../')}
+<button class="to-top" id="to-top" type="button" aria-label="回到顶部" title="回到顶部">↑</button>
+<script src="../assets/js/ui.js"></script>
+<script>BlogUI.initCommon();BlogUI.initPostPage('post-content',{native:true});</script>
+</body>
+</html>
+`;
+}
+
+/** 首页的静态版本：JS 加载后会被 SPA 覆盖，但爬虫和禁用 JS 的读者看到的是这个 */
+function staticHomeHtml() {
+  const cards = published.map((p) => `<a class="post-card" href="p/${esc(p.slug)}.html">
+      <h3>${esc(p.title)}</h3>
+      ${p.summary ? `<p class="summary">${esc(p.summary)}</p>` : ''}
+      <div class="meta"><span>${esc(p.dateText)}</span><i class="dot"></i><span>${p.readingTime} 分钟阅读</span>${p.tags.length ? '<i class="dot"></i><span class="tags">' + p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('') + '</span>' : ''}</div>
+    </a>`).join('\n    ');
+
+  const tags = (() => {
+    const map = {};
+    published.forEach((p) => p.tags.forEach((t) => { map[t] = (map[t] || 0) + 1; }));
+    return Object.keys(map).map((t) => ({ name: t, count: map[t] })).sort((a, b) => b.count - a.count);
+  })();
+
+  const latest = published[0];
+  return `<section class="hero">
+      <h1>${esc(site.title)}</h1>
+      <p>${esc(site.description || site.subtitle || '')}</p>
+      <div class="meta-row">
+        <span class="chip">共 ${published.length} 篇文章</span>
+        ${latest ? `<span class="chip">最近更新 ${esc(latest.dateText)}</span>` : ''}
+        ${site.author ? `<span class="chip">作者 ${esc(site.author)}</span>` : ''}
+      </div>
+    </section>
+    <div class="layout with-side">
+      <main>
+        <h2 class="section-title">最新文章 <span class="count">${published.length} 篇</span></h2>
+        <div class="post-list">
+    ${cards}
+        </div>
+      </main>
+      <aside>
+        <div class="side-card"><h4>关于</h4><p>${esc(site.subtitle || site.description || '')}</p></div>
+        <div class="side-card"><h4>标签</h4><ul>${tags.slice(0, 12).map((t) => `<li><a href="#/?tag=${encodeURIComponent(t.name)}">${esc(t.name)}<span>${t.count}</span></a></li>`).join('')}</ul></div>
+        <div class="side-card"><h4>统计</h4><ul>
+          <li><a>文章<span>${published.length}</span></a></li>
+          <li><a>标签<span>${tags.length}</span></a></li>
+          <li><a href="feed.xml">RSS 订阅<span>↗</span></a></li>
+        </ul></div>
+      </aside>
+    </div>`;
+}
+
+/** 把 index.html 里 <!-- BUILD:X:START --> ... <!-- BUILD:X:END --> 之间的内容换掉 */
+function injectBlock(html, name, content) {
+  const re = new RegExp('(<!-- BUILD:' + name + ':START -->)[\\s\\S]*?(<!-- BUILD:' + name + ':END -->)');
+  if (!re.test(html)) {
+    warnings.push(`index.html 里找不到 BUILD:${name} 标记，跳过注入`);
+    return html;
+  }
+  return html.replace(re, `$1\n${content}\n<!-- BUILD:${name}:END -->`);
+}
+
+// 1) 静态文章页
+fs.rmSync(STATIC_DIR, { recursive: true, force: true });
+fs.mkdirSync(STATIC_DIR, { recursive: true });
+published.forEach((post, i) => {
+  const newer = i > 0 ? published[i - 1] : null;
+  const older = i < published.length - 1 ? published[i + 1] : null;
+  fs.writeFileSync(path.join(STATIC_DIR, `${post.slug}.html`), renderPostPage(post, older, newer), 'utf8');
+});
+
+// 2) sitemap 与 robots
+let hasSitemap = false;
+if (BASE) {
+  const urls = [`${BASE}/`, ...published.map((p) => `${BASE}/p/${p.slug}.html`)];
+  const sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + urls.map((u) => `  <url><loc>${xmlEscape(u)}</loc></url>`).join('\n')
+    + '\n</urlset>\n';
+  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), sitemap, 'utf8');
+  fs.writeFileSync(path.join(ROOT, 'robots.txt'),
+    `User-agent: *\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`, 'utf8');
+  hasSitemap = true;
+}
+
+// 3) 首页静态注入
+const indexPath = path.join(ROOT, 'index.html');
+let indexHtml = readText(indexPath);
+const before = indexHtml;
+indexHtml = injectBlock(indexHtml, 'NAV', navLinks(''));
+indexHtml = injectBlock(indexHtml, 'HOME', staticHomeHtml());
+if (indexHtml !== before) fs.writeFileSync(indexPath, indexHtml, 'utf8');
+
+
+
 /* ------------------------------ RSS ------------------------------ */
 
 let feedPath = '';
 if (site.url) {
   const base = String(site.url).replace(/\/+$/, '');
+  // 指向静态页面而不是 #/post/... —— 订阅器里点开就能直接读，不依赖 JS
   const items = posts.filter((p) => !p.draft).slice(0, 20).map((p) => `    <item>
       <title>${xmlEscape(p.title)}</title>
-      <link>${xmlEscape(`${base}/#/post/${p.slug}`)}</link>
-      <guid isPermaLink="false">${xmlEscape(p.slug)}</guid>
+      <link>${xmlEscape(`${base}/p/${p.slug}.html`)}</link>
+      <guid isPermaLink="true">${xmlEscape(`${base}/p/${p.slug}.html`)}</guid>
       <pubDate>${new Date(p.date + 'T08:00:00Z').toUTCString()}</pubDate>
       <description>${xmlEscape(p.summary)}</description>
     </item>`).join('\n');
@@ -230,6 +465,9 @@ ${items}
 
 const kb = (fs.statSync(OUT_FILE).size / 1024).toFixed(1);
 console.log(`✓ 已生成 ${path.relative(ROOT, OUT_FILE)}（${posts.length} 篇文章，${kb} KB）`);
+console.log(`✓ 已生成 ${published.length} 个静态文章页：p/<slug>.html（含分享卡片元信息，搜索引擎可抓取）`);
+if (hasSitemap) console.log('✓ 已生成 sitemap.xml 与 robots.txt');
+console.log('✓ 已把导航和文章列表静态注入 index.html（禁用 JS 也能读）');
 if (Object.keys(pages).length) {
   console.log(`  独立页面：${Object.keys(pages).map((k) => `pages/${k}.md`).join('、')}`);
 }

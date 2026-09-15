@@ -99,6 +99,48 @@ for (const [name, page] of Object.entries(pages)) {
   if (/\u0000/.test(page.html || '')) fail(name, '存在未还原的占位符');
 }
 
+/* ------------------------------ 隐私词检查 ------------------------------ */
+
+// 本地文件 .privacy-terms.txt 里每行写一个「绝不能出现在线上内容里」的词（比如真实姓名）。
+// 该文件以点开头，deploy.mjs 不会上传它，所以词本身也不会被发布出去。
+const privacyFile = path.join(ROOT, '.privacy-terms.txt');
+if (fs.existsSync(privacyFile)) {
+  const terms = fs.readFileSync(privacyFile, 'utf8').split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter((s) => s && !s.startsWith('#'));
+
+  if (terms.length) {
+    console.log(`隐私词检查：${terms.length} 个词\n`);
+    const targets = [
+      'assets/js/posts-data.js',
+      'feed.xml',
+      'index.html',
+      'site.json',
+      ...fs.readdirSync(path.join(ROOT, 'posts')).filter((f) => f.endsWith('.md')).map((f) => `posts/${f}`),
+      ...fs.readdirSync(path.join(ROOT, 'pages')).filter((f) => f.endsWith('.md')).map((f) => `pages/${f}`),
+    ];
+
+    let leaked = 0;
+    for (const rel of targets) {
+      const file = path.join(ROOT, rel);
+      if (!fs.existsSync(file)) continue;
+      const text = fs.readFileSync(file, 'utf8');
+      for (const term of terms) {
+        if (text.includes(term)) {
+          warn(rel, `出现了隐私词「${term}」——这个词会被发布到线上`);
+          leaked++;
+        }
+      }
+    }
+    if (leaked) {
+      errors++; // 提到错误级别，让 npm run check 直接失败
+      console.log('  → 请改掉上面的内容，或者（确认无风险时）更新 .privacy-terms.txt');
+    } else {
+      console.log(`  ✓ ${targets.length} 个待发布文件里都没有这些词\n`);
+    }
+  }
+}
+
 /* ------------------------------ 汇总 ------------------------------ */
 
 const totalWords = posts.reduce((n, p) => n + (p.words || 0), 0);

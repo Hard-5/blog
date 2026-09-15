@@ -142,6 +142,23 @@ npm run deploy -- --repo Hard-5/blog        # 手动指定仓库
 
 > 有一个已知限制：如果凭据里没有 `workflow` 权限，`.github/workflows/` 下的文件会被自动跳过（GitHub 不允许普通凭据修改工作流文件）。这不影响网站发布，只是没法用 Actions 自动构建。
 
+## 防止个人信息泄露
+
+`npm run check` 会顺带做一次隐私词检查：
+
+- 把不想出现在线上的词（真实姓名、手机号、旧邮箱等）写进根目录的 `.privacy-terms.txt`，每行一个
+- 只要这些词出现在**待发布的文件**里（文章、关于页、构建产物、RSS），检查就会失败并指出是哪个文件
+- `.privacy-terms.txt` 以点开头，`deploy.mjs` 会自动跳过它，所以**词本身也不会被发布出去**
+
+所以发布前的标准动作是：
+
+```bash
+npm run build && npm run check && npm run deploy
+```
+
+另外，`deploy.mjs` 会用 GitHub 的匿名邮箱（`<id>+<用户名>@users.noreply.github.com`）给提交署名，
+不会把你账号绑定的真实邮箱写进公开的提交记录。
+
 ## 部署到公网
 
 完整说明（包括不用命令行的网页拖拽方式、常见问题排查）见 **`部署到公网.md`**。

@@ -190,7 +190,7 @@ goto('#/tags');
 assert('标签总览页渲染', /tag-cloud/.test(out()) && count(out(), /class="tag"/g) > 3);
 
 goto('#/about');
-assert('关于页渲染（pages/about.md）', /class="prose"/.test(out()) && out().includes('Hard 5'));
+assert('关于页渲染（pages/about.md）', /class="prose"/.test(out()) && out().includes('Blooming Peaches'));
 
 goto('#/post/this-does-not-exist');
 assert('不存在的文章走 404 分支', /404/.test(out()));

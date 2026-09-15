@@ -4,7 +4,7 @@ window.SITE = {
   "title": "Blooming Peaches",
   "subtitle": "记录一个大一新生的编程学习过程",
   "description": "计算机专业学习笔记：C / Python / 数据结构与算法 / 工程工具链。写给自己，也写给后来的人。",
-  "author": "Hard 5",
+  "author": "Blooming Peaches",
   "lang": "zh-CN",
   "url": "https://hard-5.github.io/blog/",
   "repo": "Hard-5/blog",
@@ -235,7 +235,7 @@ window.BLOG_POSTS = [
 window.BLOG_PAGES = {
   "about": {
     "title": "关于我",
-    "html": "<p>你好，我是 <strong>Hard 5</strong>，计算机相关专业大一学生。</p>\n<p>这个博客用来存放我的学习笔记：语言基础、数据结构与算法、工程工具链，以及踩过的坑。写作原则是<strong>只写自己真的动手验证过的东西</strong>——代码跑过、报错复现过、结论能落到具体场景，才会写出来。</p>\n<h2 id=\"现在在做什么\">现在在做什么</h2>\n<ul><li>主线：把 C 语言的指针和内存模型彻底搞明白，同时用 Python 刷题保持手感</li><li>算法：系统过一遍数据结构，目标是大一结束前手写完 8~10 个结构</li><li>工程：熟悉 Git、命令行、调试器，学会把一个项目完整地部署出去</li></ul>\n<h2 id=\"关于这个博客\">关于这个博客</h2>\n<ul><li>内容是 Markdown 写的，站点是零依赖的静态页面，源码结构简单到可以随时拆开改</li><li>没有评论区和统计脚本，所有内容都在你自己浏览器里渲染</li><li>如果某篇文章有错误，欢迎直接告诉我，我会改并保留修改记录</li></ul>\n<h2 id=\"联系\">联系</h2>\n<ul><li>GitHub：<a href=\"https://github.com/Hard-5\" target=\"_blank\" rel=\"noopener noreferrer\">https://github.com/Hard-5</a></li></ul>\n<blockquote><p>如果你也在自学编程，欢迎交流。这个阶段最稀缺的不是资料，而是「有人告诉你下一步该学什么」。</p></blockquote>",
+    "html": "<p>你好，我是 <strong>Blooming Peaches</strong>，计算机相关专业大一学生。</p>\n<p>这个博客用来存放我的学习笔记：语言基础、数据结构与算法、工程工具链，以及踩过的坑。写作原则是<strong>只写自己真的动手验证过的东西</strong>——代码跑过、报错复现过、结论能落到具体场景，才会写出来。</p>\n<h2 id=\"现在在做什么\">现在在做什么</h2>\n<ul><li>主线：把 C 语言的指针和内存模型彻底搞明白，同时用 Python 刷题保持手感</li><li>算法：系统过一遍数据结构，目标是大一结束前手写完 8~10 个结构</li><li>工程：熟悉 Git、命令行、调试器，学会把一个项目完整地部署出去</li></ul>\n<h2 id=\"关于这个博客\">关于这个博客</h2>\n<ul><li>内容是 Markdown 写的，站点是零依赖的静态页面，源码结构简单到可以随时拆开改</li><li>没有评论区和统计脚本，所有内容都在你自己浏览器里渲染</li><li>如果某篇文章有错误，欢迎直接告诉我，我会改并保留修改记录</li></ul>\n<h2 id=\"联系\">联系</h2>\n<ul><li>GitHub：<a href=\"https://github.com/Hard-5\" target=\"_blank\" rel=\"noopener noreferrer\">https://github.com/Hard-5</a></li></ul>\n<blockquote><p>如果你也在自学编程，欢迎交流。这个阶段最稀缺的不是资料，而是「有人告诉你下一步该学什么」。</p></blockquote>",
     "toc": [
       {
         "level": 2,
@@ -255,4 +255,4 @@ window.BLOG_PAGES = {
     ]
   }
 };
-window.BLOG_BUILT_AT = "2026-09-15T15:01:35.401Z";
+window.BLOG_BUILT_AT = "2026-09-15T15:06:05.046Z";

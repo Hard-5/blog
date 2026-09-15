@@ -1,7 +1,7 @@
 /* 本文件由 tools/build.mjs 自动生成，请勿手动修改。 */
 /* eslint-disable */
 window.SITE = {
-  "title": "Hard 5",
+  "title": "Blooming Peaches",
   "subtitle": "记录一个大一新生的编程学习过程",
   "description": "计算机专业学习笔记：C / Python / 数据结构与算法 / 工程工具链。写给自己，也写给后来的人。",
   "author": "Hard 5",
@@ -255,4 +255,4 @@ window.BLOG_PAGES = {
     ]
   }
 };
-window.BLOG_BUILT_AT = "2026-09-15T12:48:04.810Z";
+window.BLOG_BUILT_AT = "2026-09-15T15:01:35.401Z";
